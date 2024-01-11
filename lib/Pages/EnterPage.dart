@@ -27,8 +27,6 @@ class _EnterPageState extends State<EnterPage> {
       'SubHeader': 'Kami senang melihatmu kembali',
       'Email': 'Klik tombol "Masuk" dibawah ini',
       'ButtonLogin': 'Masuk',
-      'Footer': 'Belum punya akun?',
-      'FooterButton': 'Daftar Gratis!',
 
       'HeaderWarning2': 'Keluar dari Aplikasi?',
       'DescriptionWarning2': 'Tekan "Keluar" untuk menutup aplikasi'

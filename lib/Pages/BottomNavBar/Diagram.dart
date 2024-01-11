@@ -29,7 +29,7 @@ class _DiagramState extends State<Diagram> {
   @override
   void initState() {
     super.initState();
-    fetchDataFuture = fetchData();
+    fetchDataFuture = fetchDataFromAPI();
     getData();
     teksUI = [
       {
@@ -48,13 +48,13 @@ class _DiagramState extends State<Diagram> {
     ].cast<Map<String, String>>();
   }
 
-  Future<bool> fetchData() async {
+  Future<bool> fetchDataFromAPI() async {
     http.Response response = http.Response('', 500);
 
     try {
       response = await http.get(
         Uri.parse('https://api.bps.go.id/v1/population/total'),
-        headers: {'Authorization': 'Bearer f49f7f03bfadeb96abe0d0749a387750'},
+        headers: {'Authorization': 'Bearer 41a8d7d389f9239766aa4b1542bfae90'},
       );
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -95,9 +95,9 @@ class _DiagramState extends State<Diagram> {
 
         setState(() {
           teksUI[0]['Penduduk2020'] = 'Penduduk Indonesia 2020 : $penduduk2020';
-          teksUI[0]['Penduduk2021'] = 'Penduduk Indonesia 2020 : $penduduk2021';
-          teksUI[0]['Penduduk2022'] = 'Penduduk Indonesia 2020 : $penduduk2022';
-          teksUI[0]['Penduduk2023'] = 'Penduduk Indonesia 2020 : $penduduk2023';
+          teksUI[0]['Penduduk2021'] = 'Penduduk Indonesia 2021 : $penduduk2021';
+          teksUI[0]['Penduduk2022'] = 'Penduduk Indonesia 2022 : $penduduk2022';
+          teksUI[0]['Penduduk2023'] = 'Penduduk Indonesia 2023 : $penduduk2023';
         });
 
       } else {

@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Obnutries',
+      title: 'Diagrams',
       initialRoute: SplashScreen.routeName,
       debugShowCheckedModeBanner: false,
       routes: {
