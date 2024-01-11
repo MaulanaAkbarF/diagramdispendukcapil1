@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "370106019117",
+    "project_id": "obnutries",
+    "storage_bucket": "obnutries.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370106019117:android:cc1b0bec86361766ccf7a4",
+        "android_client_info": {
+          "package_name": "com.example.diagrams"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUf5rzXSjA0dNpsVf1azCzmCIrsQ8H-tI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370106019117:android:b08e13bc8f69fd0cccf7a4",
+        "android_client_info": {
+          "package_name": "com.example.obnutries"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUf5rzXSjA0dNpsVf1azCzmCIrsQ8H-tI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
