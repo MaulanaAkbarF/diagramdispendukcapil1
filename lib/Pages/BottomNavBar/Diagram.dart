@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../Style/styleapp.dart';
+import 'package:intl/intl.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,7 +23,9 @@ class _DiagramState extends State<Diagram> {
   double penduduk2023 = 0.0;
   final String dataNameReceive = "Dispendukcapil";
   late List<Map<String, dynamic>> provinsiData;
+  List<Map<String, dynamic>> daftarKabupaten = [];
   late int jumlahPendudukJawaTimur;
+  late String selectedKabupaten;
   late List<Map> teksUI;
   late Future<bool> fetchDataFuture;
 
@@ -30,11 +33,17 @@ class _DiagramState extends State<Diagram> {
   void initState() {
     super.initState();
     fetchDataFuture = fetchDataFromAPI();
+    fetchDataFromBinderByte();
+    selectedKabupaten = daftarKabupaten.isNotEmpty ? daftarKabupaten[0]['id'] : '';
     getData();
     teksUI = [
       {
         'Header': 'Halo, $dataNameReceive',
         'SubHeader': 'Data Penduduk Indonesia',
+        'teksPenduduk2020': '2020',
+        'teksPenduduk2021': '2021',
+        'teksPenduduk2022': '2022',
+        'teksPenduduk2023': '2023',
         'Penduduk2020': '',
         'Penduduk2021': '',
         'Penduduk2022': '',
@@ -49,29 +58,53 @@ class _DiagramState extends State<Diagram> {
   }
 
   Future<bool> fetchDataFromAPI() async {
-    http.Response response = http.Response('', 500);
+    http.Response response = http.Response('', 400);
 
     try {
       response = await http.get(
         Uri.parse('https://api.bps.go.id/v1/population/total'),
-        headers: {'Authorization': 'Bearer 41a8d7d389f9239766aa4b1542bfae90'},
+        headers: {'Authorization': 'Bearer 0c135b26a8bae613261724fb545282b4'},
       );
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         int jumlahPendudukIndonesia = jsonResponse['data']['population'];
 
         setState(() {
-          teksUI[0]['SubHeader'] = 'Jumlah Penduduk Indonesia: $jumlahPendudukIndonesia';
+          teksUI[0]['Penduduk2020'] = 'Penduduk Indonesia 2020 : $jumlahPendudukIndonesia';
         });
 
         return true;
       } else {
-        throw Exception('Failed to load data. Status Code: ${response.statusCode}');
+        print('Gagal mengambil data: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        throw Exception('Gagal memuat data');
       }
     } catch (e) {
-      print('Error fetching data: $e');
-      print('Response body: ${response.body}');
+      print('Gagal mengambil data: $e\nKunjungi halaman untuk memeriksa kesalahan di:\nhttps://api.bps.go.id/v1/population/total');
+      // print('Response body:\n${response.body}');
       return false;
+    }
+  }
+
+  Future<void> fetchDataFromBinderByte() async {
+    var request = http.Request('GET',
+        Uri.parse('https://api.binderbyte.com/wilayah/kabupaten?api_key=abfaea4707338bbc3b06f5a0221a4dba2e8871d3758f1aa7a0a5f53170beeb3d&id_provinsi=36'));
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      String responseBody = await response.stream.bytesToString();
+      Map<String, dynamic> responseData = json.decode(responseBody);
+
+      if (responseData['code'] == '200') {
+        daftarKabupaten = List<Map<String, dynamic>>.from(responseData['value']);
+      } else {
+        print('Gagal mengambil data kabupaten:\n${responseData['messages']}');
+      }
+    } else {
+      String errorResponseBody = await response.stream.bytesToString();
+      print(errorResponseBody);
+      print('Gagal mengambil data kabupaten: ${response.reasonPhrase}\nKunjungi halaman untuk melihat kesalahan:\nhttps://api.binderbyte.com/wilayah/kabupaten?api_key=abfaea4707338bbc3b06f5a0221a4dba2e8871d3758f1aa7a0a5f53170beeb3d&id_provinsi=36');
     }
   }
 
@@ -94,10 +127,10 @@ class _DiagramState extends State<Diagram> {
         });
 
         setState(() {
-          teksUI[0]['Penduduk2020'] = 'Penduduk Indonesia 2020 : $penduduk2020';
-          teksUI[0]['Penduduk2021'] = 'Penduduk Indonesia 2021 : $penduduk2021';
-          teksUI[0]['Penduduk2022'] = 'Penduduk Indonesia 2022 : $penduduk2022';
-          teksUI[0]['Penduduk2023'] = 'Penduduk Indonesia 2023 : $penduduk2023';
+          teksUI[0]['Penduduk2020'] = 'Jumlah: ${NumberFormat.decimalPattern('en_US').format(penduduk2020)}';
+          teksUI[0]['Penduduk2021'] = 'Jumlah: ${NumberFormat.decimalPattern('en_US').format(penduduk2021)}';
+          teksUI[0]['Penduduk2022'] = 'Jumlah: ${NumberFormat.decimalPattern('en_US').format(penduduk2022)}';
+          teksUI[0]['Penduduk2023'] = 'Jumlah: ${NumberFormat.decimalPattern('en_US').format(penduduk2023)}';
         });
 
       } else {
@@ -178,61 +211,226 @@ class _DiagramState extends State<Diagram> {
                           ),
                         ),
                         const SizedBox(height: 10,),
-                        SizedBox(
-                          height: 300,
-                          child: charts.BarChart(
-                            _createSeries(),
-                            animate: true,
-                          ),
+                        DropdownButton<String>(
+                          value: selectedKabupaten,
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedKabupaten = newValue!;
+                            });
+                          },
+                          items: daftarKabupaten
+                              .map<DropdownMenuItem<String>>((Map<String, dynamic> kabupaten) {
+                            return DropdownMenuItem<String>(
+                              value: kabupaten['id'],
+                              child: Text(kabupaten['name']),
+                            );
+                          }).toList(),
                         ),
                         const SizedBox(height: 30,),
-                        Align(
-                          alignment: FractionalOffset.topLeft,
-                          child: Text(teks['Penduduk2020'],
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 4,
-                            style: StyleApp.mediumTextStyle.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black
-                            ),
-                          ),
+                        FutureBuilder(
+                          future: fetchDataFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(),
+                                    SizedBox(height: 10),
+                                    Text("Memuat Data"),
+                                  ],
+                                ),
+                              );
+                            } else if (snapshot.hasError) {
+                              return Text("Error: ${snapshot.error}");
+                            } else {
+                              return SizedBox(
+                                height: 300,
+                                child: charts.BarChart(
+                                  _createSeries(),
+                                  animate: true,
+                                ),
+                              );
+                            }
+                          },
                         ),
-                        const SizedBox(height: 10,),
-                        Align(
-                          alignment: FractionalOffset.topLeft,
-                          child: Text(teks['Penduduk2021'],
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 4,
-                            style: StyleApp.mediumTextStyle.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10,),
-                        Align(
-                          alignment: FractionalOffset.topLeft,
-                          child: Text(teks['Penduduk2022'],
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 4,
-                            style: StyleApp.mediumTextStyle.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10,),
-                        Align(
-                          alignment: FractionalOffset.topLeft,
-                          child: Text(teks['Penduduk2023'],
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 4,
-                            style: StyleApp.mediumTextStyle.copyWith(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.black
-                            ),
-                          ),
-                        ),
+                        const SizedBox(height: 30,),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      margin: EdgeInsets.only(right: 5),
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            ShaderMask(
+                                              shaderCallback: (Rect bounds) {
+                                                return LinearGradient(
+                                                  colors: [Colors.redAccent.shade200, Colors.purpleAccent],
+                                                ).createShader(bounds);
+                                              },
+                                              child: RichText(
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                text: TextSpan(
+                                                  text: teks['teksPenduduk2020'],
+                                                  style: StyleApp.largeTextStyle.copyWith(
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5,),
+                                            Text(teks['Penduduk2020'],
+                                                style: StyleApp.semiLargeTextStyle.copyWith(
+                                                )
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Container(
+                                      margin: EdgeInsets.only(left: 5),
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            ShaderMask(
+                                              shaderCallback: (Rect bounds) {
+                                                return LinearGradient(
+                                                  colors: [Colors.orangeAccent, Colors.yellow.shade700],
+                                                ).createShader(bounds);
+                                              },
+                                              child: RichText(
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                text: TextSpan(
+                                                  text: teks['teksPenduduk2021'],
+                                                  style: StyleApp.largeTextStyle.copyWith(
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5,),
+                                            Text(teks['Penduduk2021'],
+                                                style: StyleApp.semiLargeTextStyle.copyWith(
+                                                )
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10,),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      margin: EdgeInsets.only(right: 5),
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            ShaderMask(
+                                              shaderCallback: (Rect bounds) {
+                                                return LinearGradient(
+                                                  colors: [Colors.deepPurple, Colors.purpleAccent],
+                                                ).createShader(bounds);
+                                              },
+                                              child: RichText(
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                text: TextSpan(
+                                                  text: teks['teksPenduduk2022'],
+                                                  style: StyleApp.largeTextStyle.copyWith(
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5,),
+                                            Text(teks['Penduduk2022'],
+                                                style: StyleApp.semiLargeTextStyle.copyWith(
+                                                )
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Container(
+                                      margin: EdgeInsets.only(left: 5),
+                                      height: 120,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade200,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            ShaderMask(
+                                              shaderCallback: (Rect bounds) {
+                                                return LinearGradient(
+                                                  colors: [Colors.blue.shade700, Colors.green],
+                                                ).createShader(bounds);
+                                              },
+                                              child: RichText(
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                text: TextSpan(
+                                                  text: teks['teksPenduduk2023'],
+                                                  style: StyleApp.largeTextStyle.copyWith(
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 5,),
+                                            Text(teks['Penduduk2023'],
+                                                style: StyleApp.semiLargeTextStyle.copyWith(
+                                                )
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ]
+                          )
+                        )
                       ],
                     ),
                   )

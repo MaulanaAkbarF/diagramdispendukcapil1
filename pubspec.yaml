@@ -28,7 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  intl:
+  intl: ^0.17.0
   fl_chart: ^0.64.0
   charts_flutter:
   pin_input_text_field:

@@ -85,7 +85,7 @@ class _EnterPageState extends State<EnterPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 32,),
+                            const SizedBox(height: 40,),
                             Align(
                               alignment: FractionalOffset.topLeft,
                               child: Text(teks['Email'],
@@ -100,7 +100,7 @@ class _EnterPageState extends State<EnterPage> {
                             Align(
                               alignment: Alignment.center,
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 50),
+                                padding: const EdgeInsets.only(top: 20),
                                 child: Material(
                                   color: Colors.greenAccent.shade400,
                                   clipBehavior: Clip.antiAliasWithSaveLayer,
