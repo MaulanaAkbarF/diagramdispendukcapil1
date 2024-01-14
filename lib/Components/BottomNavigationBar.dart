@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Pages/BottomNavBar/Diagram.dart';
+import '../Pages/BottomNavBar/TabelAPI.dart';
 
 class CustomBottomNavigationBar extends StatefulWidget {
   static String routeName = '/customBottomNavigationBar';
@@ -20,7 +21,7 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
       bottomNavigationBar: BottomNavigationBar(
         items: [
           _buildBottomNavigationBarItem(Icons.home, 'Beranda'),
-          _buildBottomNavigationBarItem(Icons.apps, 'Aplikasi'),
+          _buildBottomNavigationBarItem(Icons.apps, 'Tabel'),
           _buildBottomNavigationBarItem(Icons.bar_chart, 'Statistik'),
           _buildBottomNavigationBarItem(Icons.library_books, 'Berita'),
           _buildBottomNavigationBarItem(Icons.account_circle, 'Profil'),
@@ -63,7 +64,7 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
       case 0:
         return Diagram();
       case 1:
-        return _buildPage('Halaman Aplikasi');
+        return TabelAPI();
       case 2:
         return _buildPage('Halaman Statistik');
       case 3:

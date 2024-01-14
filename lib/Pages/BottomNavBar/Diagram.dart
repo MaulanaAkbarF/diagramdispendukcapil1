@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../Style/styleapp.dart';
 import 'package:intl/intl.dart';
 import 'package:charts_flutter/flutter.dart' as charts;
+import '../../DataAccess//Dataaccess.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -22,19 +23,15 @@ class _DiagramState extends State<Diagram> {
   double penduduk2022 = 0.0;
   double penduduk2023 = 0.0;
   final String dataNameReceive = "Dispendukcapil";
-  late List<Map<String, dynamic>> provinsiData;
-  List<Map<String, dynamic>> daftarKabupaten = [];
   late int jumlahPendudukJawaTimur;
-  late String selectedKabupaten;
   late List<Map> teksUI;
   late Future<bool> fetchDataFuture;
+  late String datapenduduk = '';
 
   @override
   void initState() {
     super.initState();
-    fetchDataFuture = fetchDataFromAPI();
-    fetchDataFromBinderByte();
-    selectedKabupaten = daftarKabupaten.isNotEmpty ? daftarKabupaten[0]['id'] : '';
+    fetchDataFuture = fetchDataFromAPI(datapenduduk);
     getData();
     teksUI = [
       {
@@ -49,63 +46,14 @@ class _DiagramState extends State<Diagram> {
         'Penduduk2022': '',
         'Penduduk2023': '',
 
-        'HeaderWarning1': 'Register Gagal!',
-        'DescriptionWarning1': 'Maaf, username atau nomor WhatsApp sudah digunakan. Coba masukkan username atau nomor WhatsApp lain',
         'HeaderWarning2': 'Konfirmasi Keluar',
         'DescriptionWarning2': 'Perubahan yang anda lakukan, tidak akan disimpan!'
       }
     ].cast<Map<String, String>>();
   }
 
-  Future<bool> fetchDataFromAPI() async {
-    http.Response response = http.Response('', 400);
-
-    try {
-      response = await http.get(
-        Uri.parse('https://api.bps.go.id/v1/population/total'),
-        headers: {'Authorization': 'Bearer 0c135b26a8bae613261724fb545282b4'},
-      );
-      if (response.statusCode == 200) {
-        Map<String, dynamic> jsonResponse = json.decode(response.body);
-        int jumlahPendudukIndonesia = jsonResponse['data']['population'];
-
-        setState(() {
-          teksUI[0]['Penduduk2020'] = 'Penduduk Indonesia 2020 : $jumlahPendudukIndonesia';
-        });
-
-        return true;
-      } else {
-        print('Gagal mengambil data: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw Exception('Gagal memuat data');
-      }
-    } catch (e) {
-      print('Gagal mengambil data: $e\nKunjungi halaman untuk memeriksa kesalahan di:\nhttps://api.bps.go.id/v1/population/total');
-      // print('Response body:\n${response.body}');
-      return false;
-    }
-  }
-
-  Future<void> fetchDataFromBinderByte() async {
-    var request = http.Request('GET',
-        Uri.parse('https://api.binderbyte.com/wilayah/kabupaten?api_key=abfaea4707338bbc3b06f5a0221a4dba2e8871d3758f1aa7a0a5f53170beeb3d&id_provinsi=36'));
-
-    http.StreamedResponse response = await request.send();
-
-    if (response.statusCode == 200) {
-      String responseBody = await response.stream.bytesToString();
-      Map<String, dynamic> responseData = json.decode(responseBody);
-
-      if (responseData['code'] == '200') {
-        daftarKabupaten = List<Map<String, dynamic>>.from(responseData['value']);
-      } else {
-        print('Gagal mengambil data kabupaten:\n${responseData['messages']}');
-      }
-    } else {
-      String errorResponseBody = await response.stream.bytesToString();
-      print(errorResponseBody);
-      print('Gagal mengambil data kabupaten: ${response.reasonPhrase}\nKunjungi halaman untuk melihat kesalahan:\nhttps://api.binderbyte.com/wilayah/kabupaten?api_key=abfaea4707338bbc3b06f5a0221a4dba2e8871d3758f1aa7a0a5f53170beeb3d&id_provinsi=36');
-    }
+  Future<bool> fetchDataFromAPI(String datapenduduk) async {
+    return await DataAccessPenduduk.fetchDataFromAPI(datapenduduk);
   }
 
   Future<void> getData() async {
@@ -210,25 +158,9 @@ class _DiagramState extends State<Diagram> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 10,),
-                        DropdownButton<String>(
-                          value: selectedKabupaten,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              selectedKabupaten = newValue!;
-                            });
-                          },
-                          items: daftarKabupaten
-                              .map<DropdownMenuItem<String>>((Map<String, dynamic> kabupaten) {
-                            return DropdownMenuItem<String>(
-                              value: kabupaten['id'],
-                              child: Text(kabupaten['name']),
-                            );
-                          }).toList(),
-                        ),
                         const SizedBox(height: 30,),
                         FutureBuilder(
-                          future: fetchDataFuture,
+                          future: fetchDataFromAPI(datapenduduk),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               return Center(

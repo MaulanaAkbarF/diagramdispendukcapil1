@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 Image.asset('assets/Image/logodispendukcapilmalang.png',
                   width: 200,
                   height: 200,),
-                const SizedBox(height: 20.0),
+                const SizedBox(height: 40.0),
                 ShaderMask(
                   shaderCallback: (Rect bounds) {
                     return const LinearGradient(
